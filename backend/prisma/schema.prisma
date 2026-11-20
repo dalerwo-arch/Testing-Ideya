@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  LOCKED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXITED
+  EXPIRED
+  TERMINATED
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  fullName     String
+  passwordHash String?
+  googleId     String?    @unique
+  role         Role       @default(STUDENT)
+  status       UserStatus @default(PENDING)
+  lockReason   String?
+  groupId      String?
+  group        Group?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  attempts  Attempt[]
+  loginLogs LoginLog[]
+
+  @@index([status])
+  @@index([groupId])
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  users       User[]
+  assignments TestAssignment[]
+}
+
+model Test {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  durationMinutes Int      @default(30)
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  questions   Question[]
+  assignments TestAssignment[]
+  attempts    Attempt[]
+}
+
+model TestAssignment {
+  testId  String
+  groupId String
+  test    Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([testId, groupId])
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  testId    String
+  test      Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  text      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  options Option[]
+  answers AttemptAnswer[]
+
+  @@index([testId])
+}
+
+model Option {
+  id         String   @id @default(uuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean  @default(false)
+  position   Int      @default(0)
+
+  answers AttemptAnswer[]
+
+  @@index([questionId])
+}
+
+model Attempt {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testId       String
+  test         Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
+  attemptNo    Int           @default(1)
+  status       AttemptStatus @default(IN_PROGRESS)
+  entryCount   Int           @default(1)
+  retakeGranted Boolean      @default(false)
+  startedAt    DateTime      @default(now())
+  finishedAt   DateTime?
+  score        Int?
+  total        Int?
+
+  answers AttemptAnswer[]
+
+  // Як донишҷӯ барои як тест танҳо як кӯшиш дорад (кӯшиши нав танҳо бо иҷозати админ).
+  @@unique([userId, testId, attemptNo])
+  @@index([testId])
+}
+
+model AttemptAnswer {
+  id         String   @id @default(uuid())
+  attemptId  String
+  attempt    Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionId   String
+  option     Option   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  isCorrect  Boolean
+  answeredAt DateTime @default(now())
+
+  // Баъди интихоб ҷавобро иваз кардан мумкин нест.
+  @@unique([attemptId, questionId])
+}
+
+model LoginLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String
+  success   Boolean
+  reason    String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
