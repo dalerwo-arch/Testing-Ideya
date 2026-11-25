@@ -35,6 +35,11 @@ export function setUnauthorizedHandler(fn: () => void) {
   onUnauthorized = fn;
 }
 
+function apiUrl(path: string) {
+  const baseUrl = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  return `${baseUrl}/api${path}`;
+}
+
 export async function api<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -43,7 +48,7 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
 
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, {
+    res = await fetch(apiUrl(path), {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -58,6 +63,10 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
     data = text ? JSON.parse(text) : null;
   } catch {
     data = null;
+  }
+
+  if (res.ok && data === null) {
+    throw new ApiError(502, "API_UNAVAILABLE");
   }
 
   if (!res.ok) {
@@ -78,7 +87,7 @@ export const del = <T,>(p: string) => api<T>("DELETE", p);
 
 export async function downloadCsv(path: string, filename: string) {
   const token = tokenStore.get();
-  const res = await fetch(`/api${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  const res = await fetch(apiUrl(path), { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   if (!res.ok) throw new ApiError(res.status, "UNKNOWN");
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

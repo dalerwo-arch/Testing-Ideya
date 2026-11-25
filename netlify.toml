@@ -4,7 +4,15 @@
   publish = "dist"
 
 [[redirects]]
+  from = "/api/*"
+  to = "/api-unavailable.json"
+  status = 503
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
   force = false
+
+  

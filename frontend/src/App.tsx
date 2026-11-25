@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import StudentTests from "./pages/student/StudentTests";
 import StudentResults from "./pages/student/StudentResults";
+import StudentProfile from "./pages/student/StudentProfile";
 import ExamPage from "./pages/student/ExamPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -16,7 +17,7 @@ import AdminTestEditor from "./pages/admin/AdminTestEditor";
 import AdminResults from "./pages/admin/AdminResults";
 import AdminLogins from "./pages/admin/AdminLogins";
 
-function Guard({ role, children, bare = false }: { role: "STUDENT" | "ADMIN"; children: ReactNode; bare?: boolean }) {
+function Guard({ role, children, bare = false }: { role: "STUDENT" | "ADMIN" | null; children: ReactNode; bare?: boolean }) {
   const { user, loading } = useAuth();
   if (loading) {
     return (
@@ -26,7 +27,7 @@ function Guard({ role, children, bare = false }: { role: "STUDENT" | "ADMIN"; ch
     );
   }
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== role) return <Navigate to={user.role === "ADMIN" ? "/admin" : "/"} replace />;
+  if (role && user.role !== role) return <Navigate to={user.role === "ADMIN" ? "/admin" : "/"} replace />;
   return bare ? <>{children}</> : <Layout>{children}</Layout>;
 }
 
@@ -38,6 +39,7 @@ export default function App() {
 
       <Route path="/" element={<Guard role="STUDENT"><StudentTests /></Guard>} />
       <Route path="/results" element={<Guard role="STUDENT"><StudentResults /></Guard>} />
+      <Route path="/profile" element={<Guard role={null}><StudentProfile /></Guard>} />
       <Route path="/exam/:testId" element={<Guard role="STUDENT" bare><ExamPage /></Guard>} />
 
       <Route path="/admin" element={<Guard role="ADMIN"><AdminDashboard /></Guard>} />

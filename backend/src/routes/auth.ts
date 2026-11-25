@@ -198,3 +198,41 @@ authRouter.post(
     res.json({ ok: true });
   })
 );
+
+authRouter.patch(
+  "/profile",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const data = z
+      .object({
+        fullName: z.string().trim().min(2).max(120).optional(),
+        email: z.string().trim().toLowerCase().email().max(200).optional(),
+        currentPassword: z.string().optional(),
+        newPassword: z.string().min(6).max(100).optional(),
+      })
+      .parse(req.body);
+
+    if (data.email) {
+      const exists = await prisma.user.findUnique({ where: { email: data.email } });
+      if (exists && exists.id !== req.user!.id) {
+        throw new HttpError(409, "EMAIL_EXISTS", "Ин Email аллакай сабт шудааст.");
+      }
+    }
+    if (data.newPassword) {
+      if (!req.user!.passwordHash || !(await verifyPassword(data.currentPassword || "", req.user!.passwordHash))) {
+        throw new HttpError(400, "INVALID_CREDENTIALS", "Пароли ҷорӣ нодуруст аст.");
+      }
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        ...(data.fullName ? { fullName: data.fullName } : {}),
+        ...(data.email ? { email: data.email } : {}),
+        ...(data.newPassword ? { passwordHash: await hashPassword(data.newPassword) } : {}),
+      },
+      include: { group: true },
+    });
+    res.json(publicUser(updated));
+  })
+);

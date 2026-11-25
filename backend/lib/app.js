@@ -196,11 +196,21 @@ async function ensureOwner() {
     });
     save();
     console.log(`Админи асосӣ сохта шуд: ${config.adminEmail}`);
-  } else if (u.role !== "ADMIN" || u.status !== "ACTIVE") {
-    u.role = "ADMIN";
-    u.status = "ACTIVE";
-    u.lockReason = null;
-    save();
+  } else {
+    let changed = false;
+    if (u.role !== "ADMIN") {
+      u.role = "ADMIN";
+      changed = true;
+    }
+    if (u.status !== "ACTIVE") {
+      u.status = "ACTIVE";
+      changed = true;
+    }
+    if (u.lockReason) {
+      u.lockReason = null;
+      changed = true;
+    }
+    if (changed) save();
   }
 }
 
@@ -337,6 +347,35 @@ route("POST", "/api/auth/change-password", "any", async (c) => {
   c.user.passwordHash = await hashPassword(next);
   save();
   return { ok: true };
+});
+
+route("PATCH", "/api/auth/profile", "any", async (c) => {
+  const b = isObj(c.body) ? c.body : {};
+  let changed = false;
+
+  if (b.fullName !== undefined) {
+    c.user.fullName = str(b.fullName, { min: 2, max: 120, name: "fullName" });
+    changed = true;
+  }
+  if (b.email !== undefined) {
+    const mail = email(b.email);
+    if (D().users.some((u) => u.id !== c.user.id && u.email === mail)) {
+      throw E(409, "EMAIL_EXISTS", "Ин Email аллакай сабт шудааст.");
+    }
+    c.user.email = mail;
+    changed = true;
+  }
+  if (b.newPassword !== undefined && b.newPassword !== "") {
+    const next = password(b.newPassword);
+    if (!c.user.passwordHash || !(await verifyPassword(String(b.currentPassword || ""), c.user.passwordHash))) {
+      throw E(400, "INVALID_CREDENTIALS", "Пароли ҷорӣ нодуруст аст.");
+    }
+    c.user.passwordHash = await hashPassword(next);
+    changed = true;
+  }
+
+  if (changed) save();
+  return publicUser(c.user);
 });
 
 // ======== ADMIN: stats, users ========

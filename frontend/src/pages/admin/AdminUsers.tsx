@@ -14,6 +14,7 @@ import {
   MenuItem,
   Paper,
   Stack,
+  InputAdornment,
   Table,
   TableBody,
   TableCell,
@@ -29,6 +30,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { del, get, patch, post } from "../../api/client";
 import type { AttemptStatus, Group, User } from "../../api/types";
 import { useI18n } from "../../i18n/I18nContext";
@@ -50,6 +53,7 @@ export default function AdminUsers() {
   const [groupId, setGroupId] = useState("");
   const [form, setForm] = useState<null | { id?: string; fullName: string; email: string; password: string; groupId: string; isAdmin: boolean }>(null);
   const [history, setHistory] = useState<{ user: User; data: History } | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [menu, setMenu] = useState<{ el: HTMLElement; user: User } | null>(null);
 
   const load = useCallback(() => {
@@ -229,12 +233,27 @@ export default function AdminUsers() {
               <TextField label={t("email")} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} fullWidth />
               <TextField
                 label={form.id ? t("newPassword") : t("password")}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 helperText={form.id ? t("admin.passwordHint") : undefined}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 fullWidth
                 autoComplete="new-password"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          edge="end"
+                          onClick={() => setShowPassword((value) => !value)}
+                          aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                        >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
               <TextField select label={t("group")} value={form.groupId} onChange={(e) => setForm({ ...form, groupId: e.target.value })} fullWidth>
                 <MenuItem value="">{t("noGroup")}</MenuItem>

@@ -26,6 +26,7 @@ module.exports = {
   adminEmail: (process.env.ADMIN_EMAIL || "dalerwo08@gmail.com").trim().toLowerCase(),
   adminPassword: process.env.ADMIN_PASSWORD || "112233",
   adminName: process.env.ADMIN_NAME || "Daler",
+  allowedOrigins: (process.env.ALLOWED_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean),
   maxExamEntries: num(process.env.MAX_EXAM_ENTRIES, 3),
   tokenHours: num(process.env.TOKEN_HOURS, 12),
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",

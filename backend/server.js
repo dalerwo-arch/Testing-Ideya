@@ -101,6 +101,24 @@ function serveStatic(req, res, pathname) {
 
 async function onRequest(req, res) {
   try {
+    const origin = req.headers.origin;
+    if (origin && config.allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    }
+    if (req.method === "OPTIONS") {
+      if (origin && !config.allowedOrigins.includes(origin)) {
+        res.writeHead(403);
+        res.end();
+        return;
+      }
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     const url = new URL(req.url, "http://localhost");
     const pathname = url.pathname;
     if (pathname.startsWith("/api/") || pathname === "/api") {

@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link as RouterLink, Navigate, useNavigate } from "react-router-dom";
-import { Alert, Box, Button, Card, CardContent, Divider, Link, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, Link, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { get } from "../api/client";
 import { ApiError } from "../api/client";
 import { useAuth } from "../AuthContext";
@@ -20,6 +22,7 @@ export default function Login() {
   const [tab, setTab] = useState<"student" | "admin">("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [googleId, setGoogleId] = useState<string | null>(null);
@@ -97,7 +100,30 @@ export default function Login() {
             <Stack spacing={2}>
               {error && <Alert severity="error">{error}</Alert>}
               <TextField label={t("email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth autoComplete="username" />
-              <TextField label={t("password")} type="password" value={password} onChange={(e) => setPassword(e.target.value)} required fullWidth autoComplete="current-password" />
+              <TextField
+                label={t("password")}
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                fullWidth
+                autoComplete="current-password"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          edge="end"
+                          onClick={() => setShowPassword((value) => !value)}
+                          aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                        >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
               <Button type="submit" variant="contained" size="large" disabled={busy}>
                 {t("login")}
               </Button>

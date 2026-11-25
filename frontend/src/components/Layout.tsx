@@ -24,6 +24,7 @@ import QuizIcon from "@mui/icons-material/Quiz";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import HistoryIcon from "@mui/icons-material/History";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import PersonIcon from "@mui/icons-material/Person";
 import { useAuth } from "../AuthContext";
 import { useI18n } from "../i18n/I18nContext";
 import LanguageSwitch from "./LanguageSwitch";
@@ -47,10 +48,12 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/admin/tests", label: t("nav.tests"), icon: <QuizIcon /> },
         { to: "/admin/results", label: t("nav.results"), icon: <AssessmentIcon /> },
         { to: "/admin/logins", label: t("nav.logins"), icon: <HistoryIcon /> },
+        { to: "/profile", label: t("nav.profile"), icon: <PersonIcon /> },
       ]
     : [
         { to: "/", label: t("nav.myTests"), icon: <AssignmentIcon />, end: true },
         { to: "/results", label: t("nav.myResults"), icon: <AssessmentIcon /> },
+        { to: "/profile", label: t("nav.profile"), icon: <PersonIcon /> },
       ];
 
   const drawerContent = (

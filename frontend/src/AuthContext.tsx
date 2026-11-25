@@ -7,6 +7,7 @@ interface AuthValue {
   loading: boolean;
   login: (email: string, password: string, as: "student" | "admin") => Promise<User>;
   loginGoogle: (credential: string) => Promise<User>;
+  setUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return r.user;
   }, []);
 
-  return <Ctx.Provider value={{ user, loading, login, loginGoogle, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, loading, login, loginGoogle, setUser, logout }}>{children}</Ctx.Provider>;
 }
 
 export const useAuth = () => useContext(Ctx);
