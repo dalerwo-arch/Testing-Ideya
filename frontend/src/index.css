@@ -1,14 +1,38 @@
 @tailwind components;
 @tailwind utilities;
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body,
 #root {
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
+  overflow-x: hidden !important;
+}
+
+::-webkit-scrollbar:horizontal {
+  display: none;
+  height: 0;
 }
 
 body {
   margin: 0;
-  background: #f5f7fb;
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+
+.auth-backdrop {
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(at 15% 15%, rgba(37, 99, 235, 0.1) 0px, transparent 50%),
+    radial-gradient(at 85% 85%, rgba(79, 70, 229, 0.1) 0px, transparent 50%);
 }

@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  InputAdornment,
   MenuItem,
   Paper,
   Stack,
@@ -20,6 +24,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
+import SearchIcon from "@mui/icons-material/Search";
 import { downloadCsv, get, post } from "../../api/client";
 import type { AttemptStatus, Group, ResultRow, TestSummary } from "../../api/types";
 import { useI18n } from "../../i18n/I18nContext";
@@ -87,63 +93,122 @@ export default function AdminResults() {
 
   return (
     <Box>
-      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1.5} mb={2}>
-        <Typography variant="h5" fontWeight={700}>{t("nav.results")}</Typography>
-        <Button variant="outlined" onClick={() => downloadCsv("/admin/results/export.csv", "results.csv").catch(ui.error)}>
+      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={1.5} mb={3}>
+        <Typography variant="h5" fontWeight={700}>
+          {t("nav.results")}
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+          onClick={() => downloadCsv("/admin/results/export.csv", "results.csv").catch(ui.error)}
+          sx={{ bgcolor: "#fff" }}
+        >
           {t("results.exportCsv")}
         </Button>
       </Stack>
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2}>
-        <TextField size="small" label={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1 }} />
-        <TextField size="small" select label={t("results.test")} value={testId} onChange={(e) => setTestId(e.target.value)} sx={{ minWidth: 200 }}>
-          <MenuItem value="">{t("all")}</MenuItem>
-          {tests.map((x) => <MenuItem key={x.id} value={x.id}>{x.title}</MenuItem>)}
-        </TextField>
-        <TextField size="small" select label={t("group")} value={groupId} onChange={(e) => setGroupId(e.target.value)} sx={{ minWidth: 160 }}>
-          <MenuItem value="">{t("all")}</MenuItem>
-          {groups.map((g) => <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>)}
-        </TextField>
-      </Stack>
+      <Card sx={{ mb: 2.5 }}>
+        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+            <TextField
+              size="small"
+              label={t("search")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ flex: 1 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" color="action" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <TextField size="small" select label={t("results.test")} value={testId} onChange={(e) => setTestId(e.target.value)} sx={{ minWidth: { sm: 200 } }}>
+              <MenuItem value="">{t("all")}</MenuItem>
+              {tests.map((x) => (
+                <MenuItem key={x.id} value={x.id}>
+                  {x.title}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField size="small" select label={t("group")} value={groupId} onChange={(e) => setGroupId(e.target.value)} sx={{ minWidth: { sm: 160 } }}>
+              <MenuItem value="">{t("all")}</MenuItem>
+              {groups.map((g) => (
+                <MenuItem key={g.id} value={g.id}>
+                  {g.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
+        </CardContent>
+      </Card>
 
       {!rows ? (
-        <CircularProgress />
+        <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : rows.length === 0 ? (
+        <Alert severity="info">{t("empty")}</Alert>
       ) : (
-        <TableContainer component={Paper}>
-          <Table size="small">
+        <TableContainer component={Paper} sx={{ overflowX: "hidden" }}>
+          <Table size="small" sx={{ width: "100%" }}>
             <TableHead>
               <TableRow>
                 <TableCell>{t("results.student")}</TableCell>
-                <TableCell>{t("group")}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{t("group")}</TableCell>
                 <TableCell>{t("results.test")}</TableCell>
-                <TableCell>{t("results.attempt")}</TableCell>
+                <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>{t("results.attempt")}</TableCell>
                 <TableCell>{t("status")}</TableCell>
                 <TableCell>{t("results.score")}</TableCell>
-                <TableCell>{t("results.entries")}</TableCell>
-                <TableCell>{t("date")}</TableCell>
+                <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>{t("results.entries")}</TableCell>
+                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{t("date")}</TableCell>
                 <TableCell align="right">{t("actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((r) => (
                 <TableRow key={r.id} hover>
-                  <TableCell>{r.user.fullName}<br /><Typography variant="caption" color="text.secondary">{r.user.email}</Typography></TableCell>
-                  <TableCell>{r.user.group ?? "—"}</TableCell>
-                  <TableCell>{r.test.title}</TableCell>
-                  <TableCell>#{r.attemptNo}</TableCell>
-                  <TableCell><StatusChip kind="attempt" value={r.status} /></TableCell>
-                  <TableCell>{r.status === "IN_PROGRESS" ? "…" : `${r.score ?? 0} / ${r.total ?? 0}`}</TableCell>
-                  <TableCell>{r.entryCount}</TableCell>
-                  <TableCell>{new Date(r.startedAt).toLocaleString()}</TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                    <Button size="small" onClick={() => open(r)}>{t("results.details")}</Button>
-                    {r.isLatest && r.status !== "IN_PROGRESS" && (
-                      r.retakeGranted ? (
-                        <Chip size="small" color="info" label={t("results.retakeGranted")} />
-                      ) : (
-                        <Button size="small" onClick={() => allow(r)}>{t("results.allowRetake")}</Button>
-                      )
-                    )}
+                  <TableCell sx={{ maxWidth: 200 }}>
+                    <Typography variant="body2" fontWeight={600} sx={{ wordBreak: "break-word" }}>
+                      {r.user.fullName}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ wordBreak: "break-all" }}>
+                      {r.user.email}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
+                    {r.user.group ? <Chip size="small" variant="outlined" label={r.user.group} /> : "—"}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 500, wordBreak: "break-word" }}>{r.test.title}</TableCell>
+                  <TableCell sx={{ display: { xs: "none", lg: "table-cell" }, fontVariantNumeric: "tabular-nums" }}>#{r.attemptNo}</TableCell>
+                  <TableCell>
+                    <StatusChip kind="attempt" value={r.status} />
+                  </TableCell>
+                  <TableCell sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    {r.status === "IN_PROGRESS" ? "…" : `${r.score ?? 0} / ${r.total ?? 0}`}
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: "none", lg: "table-cell" }, fontVariantNumeric: "tabular-nums" }}>{r.entryCount}</TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" }, color: "text.secondary", fontSize: "0.8rem" }}>
+                    {new Date(r.startedAt).toLocaleString()}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={0.75} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+                      <Button size="small" variant="outlined" onClick={() => open(r)}>
+                        {t("results.details")}
+                      </Button>
+                      {r.isLatest &&
+                        r.status !== "IN_PROGRESS" &&
+                        (r.retakeGranted ? (
+                          <Chip size="small" label={t("results.retakeGranted")} sx={{ bgcolor: "#e0f2fe", color: "#0369a1" }} />
+                        ) : (
+                          <Button size="small" variant="contained" onClick={() => allow(r)}>
+                            {t("results.allowRetake")}
+                          </Button>
+                        ))}
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
@@ -159,33 +224,44 @@ export default function AdminResults() {
         <DialogContent dividers>
           <Stack spacing={2}>
             {detail?.questions.map((q, i) => (
-              <Box key={q.id}>
-                <Typography fontWeight={600} sx={{ whiteSpace: "pre-wrap" }}>{i + 1}. {q.text}</Typography>
-                {q.selectedOptionId === null && <Typography variant="caption" color="text.secondary">{t("results.noAnswer")}</Typography>}
-                {q.options.map((o) => {
-                  const chosen = o.id === q.selectedOptionId;
-                  return (
-                    <Typography
-                      key={o.id}
-                      variant="body2"
-                      sx={{
-                        pl: 1,
-                        borderLeft: 3,
-                        borderColor: o.isCorrect ? "success.main" : chosen ? "error.main" : "transparent",
-                        fontWeight: chosen ? 700 : 400,
-                        color: chosen && !o.isCorrect ? "error.main" : undefined,
-                      }}
-                    >
-                      {o.text}
-                      {chosen ? ` ← ${t("results.selected")}` : ""}
-                    </Typography>
-                  );
-                })}
+              <Box key={q.id} sx={{ p: 2, borderRadius: 2.5, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <Typography fontWeight={600} mb={1} sx={{ whiteSpace: "pre-wrap" }}>
+                  {i + 1}. {q.text}
+                </Typography>
+                {q.selectedOptionId === null && (
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
+                    {t("results.noAnswer")}
+                  </Typography>
+                )}
+                <Stack spacing={0.5}>
+                  {q.options.map((o) => {
+                    const chosen = o.id === q.selectedOptionId;
+                    return (
+                      <Typography
+                        key={o.id}
+                        variant="body2"
+                        sx={{
+                          px: 1.25,
+                          py: 0.6,
+                          borderRadius: 1.5,
+                          borderLeft: "3px solid",
+                          borderColor: o.isCorrect ? "success.main" : chosen ? "error.main" : "transparent",
+                          bgcolor: o.isCorrect ? "#f0fdf4" : chosen ? "#fef2f2" : "#ffffff",
+                          fontWeight: chosen || o.isCorrect ? 600 : 400,
+                          color: chosen && !o.isCorrect ? "error.main" : undefined,
+                        }}
+                      >
+                        {o.text}
+                        {chosen ? ` ← ${t("results.selected")}` : ""}
+                      </Typography>
+                    );
+                  })}
+                </Stack>
               </Box>
             ))}
           </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDetail(null)}>{t("close")}</Button>
         </DialogActions>
       </Dialog>

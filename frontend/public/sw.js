@@ -1,7 +1,7 @@
 /* Service Worker: танҳо қабати барномаро (HTML/JS/CSS) нигоҳ медорад.
    Дархостҳои /api ҳеҷ гоҳ кэш намешаванд — ҷавобҳо ҳамеша ба сервер мераванд.
    Эзоҳ: браузерҳо SW-ро танҳо дар HTTPS ё localhost иҷозат медиҳанд. */
-const CACHE = "exam-shell-v1";
+const CACHE = "exam-shell-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest", "/icons/icon.svg"])));

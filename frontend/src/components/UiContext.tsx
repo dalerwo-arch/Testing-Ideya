@@ -41,17 +41,26 @@ export function UiProvider({ children }: { children: ReactNode }) {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         {toast ? (
-          <Alert severity={toast.severity} variant="filled" onClose={() => setToast(null)} sx={{ width: "100%" }}>
+          <Alert
+            severity={toast.severity}
+            variant="filled"
+            onClose={() => setToast(null)}
+            sx={{ width: "100%", borderRadius: 3, boxShadow: "0 10px 25px rgba(15, 23, 42, 0.18)" }}
+          >
             {toast.msg}
           </Alert>
         ) : undefined}
       </Snackbar>
       <Dialog open={!!dialog} onClose={() => answer(false)} fullWidth maxWidth="xs">
-        <DialogContent>
-          <DialogContentText sx={{ whiteSpace: "pre-line", pt: 2 }}>{dialog?.message}</DialogContentText>
+        <DialogContent sx={{ pt: 3, pb: 1.5 }}>
+          <DialogContentText sx={{ whiteSpace: "pre-line", color: "text.primary", fontSize: "0.95rem", lineHeight: 1.6 }}>
+            {dialog?.message}
+          </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => answer(false)}>{t("cancel")}</Button>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => answer(false)} color="inherit" sx={{ color: "text.secondary" }}>
+            {t("cancel")}
+          </Button>
           <Button onClick={() => answer(true)} variant="contained" autoFocus>
             {t("yes")}
           </Button>

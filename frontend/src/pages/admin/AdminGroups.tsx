@@ -1,7 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
-import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 import { del, get, patch, post } from "../../api/client";
 import type { Group } from "../../api/types";
 import { useI18n } from "../../i18n/I18nContext";
@@ -34,15 +56,24 @@ export default function AdminGroups() {
 
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between" mb={2}>
-        <Typography variant="h5" fontWeight={700}>{t("nav.groups")}</Typography>
-        <Button variant="contained" onClick={() => setForm({ name: "" })}>{t("admin.addGroup")}</Button>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5" fontWeight={700}>
+          {t("nav.groups")}
+        </Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setForm({ name: "" })}>
+          {t("admin.addGroup")}
+        </Button>
       </Stack>
+
       {!groups ? (
-        <CircularProgress />
+        <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : groups.length === 0 ? (
+        <Alert severity="info">{t("empty")}</Alert>
       ) : (
-        <TableContainer component={Paper}>
-          <Table size="small">
+        <TableContainer component={Paper} sx={{ overflowX: "hidden" }}>
+          <Table size="small" sx={{ width: "100%" }}>
             <TableHead>
               <TableRow>
                 <TableCell>{t("admin.groupName")}</TableCell>
@@ -54,12 +85,19 @@ export default function AdminGroups() {
             <TableBody>
               {groups.map((g) => (
                 <TableRow key={g.id} hover>
-                  <TableCell>{g.name}</TableCell>
-                  <TableCell>{g._count?.users ?? 0}</TableCell>
-                  <TableCell>{g._count?.assignments ?? 0}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{g.name}</TableCell>
+                  <TableCell>
+                    <Chip size="small" label={g._count?.users ?? 0} sx={{ bgcolor: "#eff6ff", color: "#2563eb", fontVariantNumeric: "tabular-nums" }} />
+                  </TableCell>
+                  <TableCell>
+                    <Chip size="small" label={g._count?.assignments ?? 0} sx={{ bgcolor: "#f1f5f9", color: "#475569", fontVariantNumeric: "tabular-nums" }} />
+                  </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => setForm({ id: g.id, name: g.name })}><EditIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => setForm({ id: g.id, name: g.name })}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
                     <IconButton
+                      size="small"
                       color="error"
                       onClick={async () => {
                         if (!(await ui.confirm(`${t("confirmDelete")} (${g.name})`))) return;
@@ -80,14 +118,26 @@ export default function AdminGroups() {
           </Table>
         </TableContainer>
       )}
+
       <Dialog open={!!form} onClose={() => setForm(null)} fullWidth maxWidth="xs">
         <DialogTitle>{form?.id ? t("edit") : t("admin.addGroup")}</DialogTitle>
         <DialogContent>
-          <TextField autoFocus sx={{ mt: 1 }} fullWidth label={t("admin.groupName")} value={form?.name ?? ""} onChange={(e) => form && setForm({ ...form, name: e.target.value })} />
+          <TextField
+            autoFocus
+            sx={{ mt: 1 }}
+            fullWidth
+            label={t("admin.groupName")}
+            value={form?.name ?? ""}
+            onChange={(e) => form && setForm({ ...form, name: e.target.value })}
+          />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setForm(null)}>{t("cancel")}</Button>
-          <Button variant="contained" disabled={!form?.name.trim()} onClick={save}>{t("save")}</Button>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setForm(null)} color="inherit">
+            {t("cancel")}
+          </Button>
+          <Button variant="contained" disabled={!form?.name.trim()} onClick={save}>
+            {t("save")}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
